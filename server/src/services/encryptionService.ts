@@ -1,17 +1,17 @@
-import crypto from "crypto";
+import { Request, Response, NextFunction } from "express";
+import { decryptData, encryptData } from "../services/encryptionService";
 
-const key = () => Buffer.from(process.env.ENCRYPTION_KEY!, "hex");
+export const encryptionMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (req.headers["x-encrypted"] !== "true") return next();
 
-export const encryptData = (data: any) => {
-  const iv = crypto.randomBytes(12);
-  const c = crypto.createCipheriv("aes-256-gcm", key(), iv);
-  const e = c.update(JSON.stringify(data), "utf8", "base64") + c.final("base64");
-  return `${iv.toString("base64")}.${c.getAuthTag().toString("base64")}.${e}`;
-};
+  try {
+    if (req.body?.data) req.body = decryptData(req.body.data);
+  } catch {
+    return res.status(400).json({ message: "Invalid or tampered payload" });
+  }
 
-export const decryptData = (data: string) => {
-  const [iv, tag, e] = data.split(".");
-  const d = crypto.createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "base64"));
-  d.setAuthTag(Buffer.from(tag, "base64"));
-  return JSON.parse(d.update(e, "base64", "utf8") + d.final("utf8"));
+  const json = res.json.bind(res);
+  res.json = (body: any) => json({ data: encryptData(body) });
+
+  next();
 };

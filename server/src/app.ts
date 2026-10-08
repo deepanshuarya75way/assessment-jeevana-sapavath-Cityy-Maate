@@ -1,53 +1,17 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes';
-import userRoutes from './routes/userRoutes';
-import propertyRoutes from './routes/propertyRoutes';
-import serviceRoutes from './routes/serviceRoutes';
-import sportsRoutes from './routes/sportsRoutes';
-import communityRoutes from './routes/communityRoutes';
-import chatRoutes from './routes/chatRoutes';
-import adminRoutes from './routes/adminRoutes';
-import marketplaceRoutes from './routes/marketplaceRoutes';
-import connectionRoutes from './routes/connectionRoutes';
-import notificationRoutes from './routes/notificationRoutes';
-import bookingRoutes from './routes/bookingRoutes';
-import sportsRequestRoutes from './routes/sportsRequestRoutes';
-import eventRoutes from './routes/eventRoutes';
-import roommateRoutes from './routes/roommateRoutes';
-import { encryptionMiddleware } from "./middleware/encryption";
+import { Request, Response, NextFunction } from "express";
+import { decryptData, encryptData } from "../services/encryptionService";
 
-dotenv.config();
+export const encryptionMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (req.headers["x-encrypted"] !== "true") return next();
 
-const app = express();
+  try {
+    if (req.body?.data) req.body = decryptData(req.body.data);
+  } catch {
+    return res.status(400).json({ message: "Invalid or tampered payload" });
+  }
 
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+  const json = res.json.bind(res);
+  res.json = (body: any) => json({ data: encryptData(body) });
 
-app.use(express.json());
-app.use(encryptionMiddleware);
-
-// API Health Check
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', app: 'CityMate API', version: '1.0.0', time: new Date() });
-});
-
-// Routes Registration
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/sports', sportsRoutes);
-app.use('/api/community', communityRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/marketplace', marketplaceRoutes);
-app.use('/api/connections', connectionRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/sports-partner-requests', sportsRequestRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/roommates', roommateRoutes);
-
-export default app;
+  next();
+};
