@@ -3,6 +3,7 @@
 > **"New city? New life. We've got you covered."**  
 > *Arrive anywhere. Find everything. Connect with everyone.*
 
+
 CityMate is an all-in-one digital companion for people who move to an unfamiliar city and don't know anyone. It solves all transition challenges from a single unified platform.
 
 ---
