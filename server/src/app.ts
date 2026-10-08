@@ -16,6 +16,7 @@ import bookingRoutes from './routes/bookingRoutes';
 import sportsRequestRoutes from './routes/sportsRequestRoutes';
 import eventRoutes from './routes/eventRoutes';
 import roommateRoutes from './routes/roommateRoutes';
+import { encryptionMiddleware } from "./middleware/encryption";
 
 dotenv.config();
 
@@ -23,6 +24,9 @@ const app = express();
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+app.use(express.json());
+app.use(encryptionMiddleware);
 
 // API Health Check
 app.get('/api/health', (req: Request, res: Response) => {
